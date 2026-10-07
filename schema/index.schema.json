@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://communitypokeorg.github.io/lifesim-packs/schema/index.schema.json",
+  "title": "lifesim pack registry index",
+  "description": "The registry index listing every pack published in this repository. Each entry points at a pack file under packs/<id>/pack.json.",
+  "type": "object",
+  "required": ["version", "packs"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Index format version."
+    },
+    "packs": {
+      "type": "array",
+      "description": "One entry per published pack, sorted by id.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "version", "path"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\w:.-]+$",
+            "description": "Pack id; must match the id inside the pack file and the directory name."
+          },
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "version": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "path": {
+            "type": "string",
+            "pattern": "^packs/[\\w:.-]+/pack\\.json$",
+            "description": "Registry-relative path to the pack file."
+          },
+          "description": { "type": "string", "maxLength": 2000 },
+          "requires": {
+            "type": "array",
+            "maxItems": 50,
+            "description": "Copy of the pack file's requires list, denormalized so clients can resolve dependencies without downloading every pack.",
+            "items": {
+              "type": "object",
+              "required": ["pack"],
+              "additionalProperties": false,
+              "properties": {
+                "pack": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[\\w:.-]+$" },
+                "version": { "type": "string", "minLength": 1, "maxLength": 40 }
+              }
+            }
+          },
+          "updated": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "Date (YYYY-MM-DD) this index entry was last updated."
+          }
+        }
+      }
+    }
+  }
+}

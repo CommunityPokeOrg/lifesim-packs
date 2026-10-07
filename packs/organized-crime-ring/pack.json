@@ -1,0 +1,144 @@
+{
+  "id": "organized-crime-ring",
+  "name": "Organized Crime Ring",
+  "version": "1.0.0",
+  "description": "Money laundering, front businesses and syndicate politics. Requires the White Collar Fraud pack (which in turn requires White Collar Jobs) — this pack demonstrates transitive pack dependencies.",
+  "requires": [
+    { "pack": "white-collar-fraud", "version": ">=1.0.0" }
+  ],
+  "actions": [
+    {
+      "id": "ocr.act_launder",
+      "title": "Launder dirty money",
+      "description": "Route your white-collar proceeds through the ring's front businesses and make it spendable.",
+      "category": "crime",
+      "usesPerYear": 4,
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "counter", "flag": "wcf.dirty_money", "op": "gte", "value": 5000 },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "hint": "Requires a white-collar job and $5,000+ of dirty money",
+      "outcomes": [
+        {
+          "weight": 80,
+          "effects": [
+            { "kind": "counter", "flag": "wcf.dirty_money", "delta": -5000 },
+            { "kind": "money", "delta": 4000 },
+            { "kind": "counter", "flag": "ocr.standing", "delta": 1 }
+          ],
+          "result": "The car wash had its best month on record. $5,000 dirty became $4,000 clean — the ring keeps its 20%."
+        },
+        {
+          "weight": 20,
+          "effects": [
+            { "kind": "counter", "flag": "wcf.dirty_money", "delta": -5000 },
+            { "kind": "money", "delta": 2500 },
+            { "kind": "counter", "flag": "wcf_heat", "delta": 2 }
+          ],
+          "result": "A teller reported the structured deposits. You only salvaged $2,500 and picked up heat."
+        }
+      ]
+    },
+    {
+      "id": "ocr.act_expand",
+      "title": "Recruit a new associate",
+      "description": "Your reputation in the ledgers precedes you. Grow the ring's reach.",
+      "category": "crime",
+      "usesPerYear": 2,
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "counter", "flag": "ocr.standing", "op": "gte", "value": 3 },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "hint": "Requires ring standing 3+ (earned by laundering)",
+      "outcomes": [
+        {
+          "weight": 70,
+          "effects": [
+            { "kind": "counter", "flag": "ocr.standing", "delta": 2 },
+            { "kind": "stat", "stat": "happiness", "delta": 3 }
+          ],
+          "result": "The new recruit launders fast and asks few questions. The ring grows."
+        },
+        {
+          "weight": 30,
+          "effects": [
+            { "kind": "counter", "flag": "wcf_heat", "delta": 3 }
+          ],
+          "result": "The 'recruit' wore a wire to your second meeting.",
+          "goto": "wcf.sec_investigation"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "ocr.boss_summons",
+      "title": "The boss wants a word",
+      "description": "Your laundering work has been noticed at the top. The invitation is polite and non-optional.",
+      "category": "crime",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "counter", "flag": "ocr.standing", "op": "gte", "value": 5 },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "weight": 8,
+      "cooldown": 4,
+      "choices": [
+        {
+          "id": "accept_promotion",
+          "text": "Accept a bigger role",
+          "outcomes": [
+            {
+              "weight": 70,
+              "effects": [
+                { "kind": "counter", "flag": "ocr.standing", "delta": 3 },
+                { "kind": "money", "delta": 15000 },
+                { "kind": "stat", "stat": "happiness", "delta": 6 }
+              ],
+              "result": "You're running two fronts now. The tribute envelope came back with $15,000 in it."
+            },
+            {
+              "weight": 30,
+              "effects": [
+                { "kind": "counter", "flag": "wcf_heat", "delta": 4 }
+              ],
+              "result": "Bigger role, bigger file at the bureau."
+            }
+          ]
+        },
+        {
+          "id": "decline",
+          "text": "Politely decline",
+          "outcomes": [
+            {
+              "weight": 60,
+              "effects": [
+                { "kind": "counter", "flag": "ocr.standing", "delta": -2 },
+                { "kind": "stat", "stat": "happiness", "delta": -4 }
+              ],
+              "result": "Declining is noted. Ambition is expected in this organization."
+            },
+            {
+              "weight": 40,
+              "effects": [
+                { "kind": "counter", "flag": "ocr.standing", "delta": -5 },
+                { "kind": "stat", "stat": "happiness", "delta": -10 }
+              ],
+              "result": "The boss smiled and said 'of course.' You did not sleep well for a week."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "laws": []
+}

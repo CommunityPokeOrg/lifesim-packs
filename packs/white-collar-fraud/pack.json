@@ -1,0 +1,457 @@
+{
+  "id": "white-collar-fraud",
+  "name": "White Collar Fraud",
+  "version": "1.0.0",
+  "description": "Ledger crime: embezzlement, insider trading and cooked books — gated on holding a white_collar job from the White Collar Jobs pack. Raise too much heat and the auditors come.",
+  "requires": [
+    { "pack": "white-collar-jobs", "version": ">=1.0.0" }
+  ],
+  "actions": [
+    {
+      "id": "wcf.act_embezzle",
+      "title": "Skim from the company",
+      "description": "The accounts you manage have a rounding problem. Your rounding.",
+      "category": "crime",
+      "usesPerYear": 3,
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "hint": "Requires a white-collar job",
+      "outcomes": [
+        {
+          "weight": 70,
+          "weightModifiers": [
+            {
+              "when": { "kind": "stat", "stat": "smarts", "op": "gte", "value": 70 },
+              "add": 15
+            },
+            {
+              "when": { "kind": "counter", "flag": "wcf_heat", "op": "gte", "value": 6 },
+              "multiply": 0.5
+            }
+          ],
+          "effects": [
+            { "kind": "counter", "flag": "wcf.dirty_money", "delta": 14000 },
+            { "kind": "counter", "flag": "wcf_heat", "delta": 1 }
+          ],
+          "result": "You padded an expense report and rewrote an invoice trail. +$14,000 in untouchable cash — it needs laundering before you can spend it."
+        },
+        {
+          "weight": 30,
+          "effects": [
+            { "kind": "counter", "flag": "wcf_heat", "delta": 3 },
+            { "kind": "stat", "stat": "happiness", "delta": -5 }
+          ],
+          "result": "A junior accountant almost caught the discrepancy. You shredded a lot of paper this week.",
+          "goto": "wcf.audit"
+        }
+      ]
+    },
+    {
+      "id": "wcf.act_insider_trade",
+      "title": "Trade on insider information",
+      "description": "The earnings report doesn't come out until Friday. You know what it says.",
+      "category": "crime",
+      "usesPerYear": 2,
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "stat", "stat": "smarts", "op": "gte", "value": 55 },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "hint": "Requires a white-collar job and smarts 55+",
+      "outcomes": [
+        {
+          "weight": 75,
+          "effects": [
+            { "kind": "counter", "flag": "wcf.dirty_money", "delta": 30000 },
+            { "kind": "counter", "flag": "wcf_heat", "delta": 2 }
+          ],
+          "result": "Your brother-in-law's brokerage account had a very good week. +$30,000 dirty."
+        },
+        {
+          "weight": 25,
+          "effects": [
+            { "kind": "counter", "flag": "wcf_heat", "delta": 4 }
+          ],
+          "result": "FINRA flagged the account. Time to have a conversation you don't want to have.",
+          "goto": "wcf.audit"
+        }
+      ]
+    },
+    {
+      "id": "wcf.act_cook_books",
+      "title": "Cook the quarterly books",
+      "description": "Your accounting experience says the numbers can say anything you want.",
+      "category": "crime",
+      "usesPerYear": 1,
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "job", "id": "accountant", "ever": true },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "hint": "Requires a white-collar job and to have worked as an Accountant",
+      "outcomes": [
+        {
+          "weight": 80,
+          "effects": [
+            { "kind": "counter", "flag": "wcf.dirty_money", "delta": 60000 },
+            { "kind": "counter", "flag": "wcf_heat", "delta": 3 },
+            { "kind": "stat", "stat": "happiness", "delta": 4 }
+          ],
+          "result": "The quarter looks phenomenal. The board is thrilled. +$60,000 dirty."
+        },
+        {
+          "weight": 20,
+          "effects": [
+            { "kind": "counter", "flag": "wcf_heat", "delta": 5 }
+          ],
+          "result": "The external auditors asked for 'supporting documentation.' There is no supporting documentation.",
+          "goto": "wcf.audit"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "wcf.audit",
+      "title": "Internal audit",
+      "description": "Two people with lanyards are 'reviewing anomalies in your cost centers.' They have a spreadsheet with your name on it.",
+      "category": "crime",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "weight": 0,
+      "choices": [
+        {
+          "id": "cooperate",
+          "text": "Cooperate fully",
+          "conditions": { "kind": "counter", "flag": "wcf_heat", "op": "lt", "value": 8 },
+          "outcomes": [
+            {
+              "weight": 70,
+              "effects": [
+                { "kind": "counter", "flag": "wcf_heat", "delta": -3 },
+                { "kind": "stat", "stat": "happiness", "delta": -4 }
+              ],
+              "result": "You gave them everything. They found nothing actionable — this time. The heat cools off."
+            },
+            {
+              "weight": 30,
+              "effects": [{ "kind": "counter", "flag": "wcf_heat", "delta": 2 }],
+              "result": "Your 'full cooperation' included one spreadsheet too many. They want a follow-up meeting.",
+              "goto": "wcf.sec_investigation"
+            }
+          ]
+        },
+        {
+          "id": "blame_intern",
+          "text": "Blame it on the intern",
+          "outcomes": [
+            {
+              "weight": 55,
+              "effects": [
+                { "kind": "counter", "flag": "wcf_heat", "delta": -2 },
+                { "kind": "stat", "stat": "happiness", "delta": -6 },
+                { "kind": "flag", "flag": "threw_intern_under_bus", "value": true }
+              ],
+              "result": "Kevin took the fall. Kevin was fired. Kevin's mother glares at you in the parking lot now."
+            },
+            {
+              "weight": 45,
+              "effects": [{ "kind": "counter", "flag": "wcf_heat", "delta": 3 }],
+              "result": "The intern had receipts. So now they have YOUR receipts.",
+              "goto": "wcf.sec_investigation"
+            }
+          ]
+        },
+        {
+          "id": "shred",
+          "text": "Shred everything tonight",
+          "conditions": { "kind": "counter", "flag": "wcf_heat", "op": "gte", "value": 5 },
+          "outcomes": [
+            {
+              "weight": 50,
+              "effects": [
+                { "kind": "counter", "flag": "wcf_heat", "delta": -4 },
+                { "kind": "stat", "stat": "happiness", "delta": -3 }
+              ],
+              "result": "The shredder jammed twice but got there. The audit finds a suspicious void where evidence used to be — and nothing else."
+            },
+            {
+              "weight": 50,
+              "effects": [{ "kind": "counter", "flag": "wcf_heat", "delta": 4 }],
+              "result": "Security footage shows a figure feeding documents into a shredder at 2 AM. A figure wearing your badge.",
+              "goto": "wcf.sec_investigation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wcf.sec_investigation",
+      "title": "Regulators at the door",
+      "description": "People in serious suits are asking for you by name. They brought a subpoena and a very patient expression.",
+      "category": "crime",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "weight": 0,
+      "choices": [
+        {
+          "id": "settle",
+          "text": "Settle quietly (pay a fine)",
+          "conditions": { "kind": "money", "op": "gte", "value": 20000 },
+          "outcomes": [
+            {
+              "weight": 75,
+              "effects": [
+                { "kind": "money", "delta": -20000 },
+                { "kind": "flag", "flag": "wcf_heat", "value": 0 },
+                { "kind": "stat", "stat": "happiness", "delta": -8 }
+              ],
+              "result": "You paid $20,000 in disgorgement and signed something you'll never discuss again. Case closed."
+            },
+            {
+              "weight": 25,
+              "effects": [
+                { "kind": "money", "delta": -20000 },
+                { "kind": "flag", "flag": "wcf_heat", "value": 6 }
+              ],
+              "result": "The settlement bought silence from the regulator — not from the coworker who tipped them off.",
+              "goto": "wcf.indictment"
+            }
+          ]
+        },
+        {
+          "id": "fight",
+          "text": "Fight the charges",
+          "outcomes": [
+            {
+              "weight": 40,
+              "weightModifiers": [
+                {
+                  "when": { "kind": "stat", "stat": "smarts", "op": "gte", "value": 75 },
+                  "add": 15
+                },
+                {
+                  "when": { "kind": "counter", "flag": "wcf_heat", "op": "gte", "value": 10 },
+                  "multiply": 0.4
+                }
+              ],
+              "effects": [
+                { "kind": "money", "delta": -8000 },
+                { "kind": "flag", "flag": "wcf_heat", "value": 2 },
+                { "kind": "stat", "stat": "happiness", "delta": -5 }
+              ],
+              "result": "Your lawyer earned every penny of the $8,000 retainer: acquitted on a technicality."
+            },
+            {
+              "weight": 60,
+              "effects": [{ "kind": "stat", "stat": "happiness", "delta": -10 }],
+              "result": "The jury didn't buy it. Neither did the judge.",
+              "goto": "wcf.indictment"
+            }
+          ]
+        },
+        {
+          "id": "flee",
+          "text": "Take an unscheduled trip abroad",
+          "conditions": { "kind": "money", "op": "gte", "value": 5000 },
+          "outcomes": [
+            {
+              "weight": 60,
+              "effects": [
+                { "kind": "money", "delta": -5000 },
+                { "kind": "flag", "flag": "wcf_heat", "value": 0 },
+                { "kind": "flag", "flag": "fugitive_interlude", "value": true },
+                { "kind": "stat", "stat": "happiness", "delta": -3 }
+              ],
+              "result": "A year 'consulting overseas' later, the file went cold. You slipped back in through a different airport."
+            },
+            {
+              "weight": 40,
+              "effects": [
+                { "kind": "money", "delta": -5000 },
+                { "kind": "stat", "stat": "happiness", "delta": -12 }
+              ],
+              "result": "Customs was waiting at the gate. Extradition paperwork travels fast.",
+              "goto": "wcf.indictment"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wcf.indictment",
+      "title": "Indicted",
+      "description": "White collar or not, a felony is a felony. The jumpsuit is not business casual.",
+      "category": "crime",
+      "weight": 0,
+      "choices": [
+        {
+          "id": "serve",
+          "text": "Serve the sentence",
+          "effects": [
+            { "kind": "flag", "flag": "in_prison", "value": true },
+            { "kind": "flag", "flag": "sentence", "value": 4 },
+            { "kind": "unflag", "flag": "employed" },
+            { "kind": "unflag", "flag": "job" },
+            { "kind": "unflag", "flag": "job_id" },
+            { "kind": "unflag", "flag": "job_field" },
+            { "kind": "flag", "flag": "wcf_heat", "value": 0 },
+            { "kind": "stat", "stat": "happiness", "delta": -20 }
+          ],
+          "result": "Four years. Your LinkedIn now says 'on sabbatical.'"
+        },
+        {
+          "id": "snitch",
+          "text": "Cooperate with prosecutors",
+          "outcomes": [
+            {
+              "weight": 65,
+              "effects": [
+                { "kind": "flag", "flag": "in_prison", "value": true },
+                { "kind": "flag", "flag": "sentence", "value": 2 },
+                { "kind": "unflag", "flag": "employed" },
+                { "kind": "unflag", "flag": "job" },
+                { "kind": "unflag", "flag": "job_id" },
+                { "kind": "unflag", "flag": "job_field" },
+                { "kind": "flag", "flag": "wcf_heat", "value": 0 },
+                { "kind": "stat", "stat": "happiness", "delta": -15 }
+              ],
+              "result": "Two years reduced for 'substantial assistance.' Three former colleagues hate you forever."
+            },
+            {
+              "weight": 35,
+              "effects": [
+                { "kind": "flag", "flag": "in_prison", "value": true },
+                { "kind": "flag", "flag": "sentence", "value": 5 },
+                { "kind": "unflag", "flag": "employed" },
+                { "kind": "unflag", "flag": "job" },
+                { "kind": "unflag", "flag": "job_id" },
+                { "kind": "unflag", "flag": "job_field" },
+                { "kind": "flag", "flag": "wcf_heat", "value": 0 },
+                { "kind": "stat", "stat": "happiness", "delta": -25 }
+              ],
+              "result": "The prosecutor found your cooperation insufficiently substantial. Five years."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wcf.whistleblower_offer",
+      "title": "An envelope of ethics",
+      "description": "You found a folder proving the CFO skims more than you do. Hand it to the SEC, or leverage it?",
+      "category": "crime",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "counter", "flag": "wcf_heat", "op": "gte", "value": 1 },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "weight": 5,
+      "cooldown": 6,
+      "choices": [
+        {
+          "id": "blow_whistle",
+          "text": "Send it to the SEC anonymously",
+          "outcomes": [
+            {
+              "weight": 80,
+              "effects": [
+                { "kind": "counter", "flag": "wcf_heat", "delta": -4 },
+                { "kind": "stat", "stat": "happiness", "delta": 5 }
+              ],
+              "result": "The CFO resigned 'to pursue other opportunities.' Your file suddenly looks clean by comparison."
+            },
+            {
+              "weight": 20,
+              "effects": [{ "kind": "counter", "flag": "wcf_heat", "delta": 2 }],
+              "result": "The SEC traced the envelope. They now want to talk about *your* folder too."
+            }
+          ]
+        },
+        {
+          "id": "blackmail",
+          "text": "Blackmail the CFO",
+          "outcomes": [
+            {
+              "weight": 60,
+              "effects": [
+                { "kind": "counter", "flag": "wcf.dirty_money", "delta": 40000 },
+                { "kind": "counter", "flag": "wcf_heat", "delta": 2 }
+              ],
+              "result": "$40,000 of silence money, quarterly. The CFO's handshake is very firm now."
+            },
+            {
+              "weight": 40,
+              "effects": [{ "kind": "counter", "flag": "wcf_heat", "delta": 5 }],
+              "result": "The CFO's lawyer counter-offered with a cease-and-desist and a subpoena draft.",
+              "goto": "wcf.sec_investigation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wcf.dragnet",
+      "title": "Your name came up",
+      "description": "Someone talked. Investigators are pulling your files, your trades and your expense reports. This is not a drill.",
+      "category": "crime",
+      "forced": true,
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "counter", "flag": "wcf_heat", "op": "gte", "value": 10 },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "weight": 0,
+      "choices": [
+        {
+          "id": "face_it",
+          "text": "Face the investigation",
+          "effects": [
+            { "kind": "flag", "flag": "wcf_heat", "value": 4 }
+          ],
+          "result": "There is no more room to maneuver.",
+          "goto": "wcf.sec_investigation"
+        }
+      ]
+    }
+  ],
+  "laws": [
+    {
+      "id": "wcf.heat_decay",
+      "title": "The auditors moved on to a new target.",
+      "conditions": { "kind": "counter", "flag": "wcf_heat", "op": "gt", "value": 0 },
+      "minAge": 0,
+      "everyYears": 1,
+      "chance": 100,
+      "effects": [
+        { "kind": "counter", "flag": "wcf_heat", "delta": -1 }
+      ],
+      "silent": true
+    }
+  ]
+}

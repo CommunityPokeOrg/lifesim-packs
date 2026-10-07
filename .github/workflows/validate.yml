@@ -1,0 +1,14 @@
+name: validate packs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate registry (stdlib only, no dependencies)
+        run: python3 scripts/validate.py

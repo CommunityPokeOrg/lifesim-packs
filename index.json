@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "packs": [
+    {
+      "id": "organized-crime-ring",
+      "name": "Organized Crime Ring",
+      "version": "1.0.0",
+      "path": "packs/organized-crime-ring/pack.json",
+      "description": "Money laundering, front businesses and syndicate politics. Requires the White Collar Fraud pack (which in turn requires White Collar Jobs) — this pack demonstrates transitive pack dependencies.",
+      "requires": [
+        { "pack": "white-collar-fraud", "version": ">=1.0.0" }
+      ],
+      "updated": "2026-10-07"
+    },
+    {
+      "id": "white-collar-fraud",
+      "name": "White Collar Fraud",
+      "version": "1.0.0",
+      "path": "packs/white-collar-fraud/pack.json",
+      "description": "Ledger crime: embezzlement, insider trading and cooked books — gated on holding a white_collar job from the White Collar Jobs pack. Raise too much heat and the auditors come.",
+      "requires": [
+        { "pack": "white-collar-jobs", "version": ">=1.0.0" }
+      ],
+      "updated": "2026-10-07"
+    },
+    {
+      "id": "white-collar-jobs",
+      "name": "White Collar Jobs",
+      "version": "1.0.0",
+      "path": "packs/white-collar-jobs/pack.json",
+      "description": "A corporate career track: mailroom to analyst to senior roles. Jobs here use the \"white_collar\" field, which crime and career packs gate on with {kind:\"job\", field:\"white_collar\"} conditions.",
+      "requires": [],
+      "updated": "2026-10-07"
+    }
+  ]
+}

@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://communitypokeorg.github.io/lifesim-packs/schema/pack.schema.json",
+  "title": "lifesim pack file",
+  "description": "A community content pack for lifesim. Mirrors the engine's packFileSchema (zod); the engine schema in the lifesim repo is authoritative. A pack is data only: no code, no network.",
+  "type": "object",
+  "required": ["id", "name", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[\\w:.-]+$",
+      "description": "Unique pack id. Convention: lowercase kebab-case, e.g. 'white-collar-fraud'."
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "Semver, e.g. '1.0.0'. Bumped on every change to the pack's content."
+    },
+    "description": { "type": "string", "maxLength": 2000 },
+    "requires": {
+      "type": "array",
+      "maxItems": 50,
+      "description": "Hard dependencies on other packs. All required packs must be present in the registry/loaded set; a missing or incompatible pack blocks the whole set from loading.",
+      "items": {
+        "type": "object",
+        "required": ["pack"],
+        "additionalProperties": false,
+        "properties": {
+          "pack": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\w:.-]+$",
+            "description": "The required pack's id. Must differ from this pack's own id."
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "Optional semver range: '>=1.2.0', '<2.0.0', '^1.2.0', '~1.2.0', or bare '1.2.0' (exact)."
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 500,
+      "items": { "$ref": "#/$defs/event" }
+    },
+    "actions": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/action" }
+    },
+    "jobs": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/job" }
+    },
+    "laws": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/worldLaw" }
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/shopItem" }
+    },
+    "ailments": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "type": "object" }
+    },
+    "names": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "first": { "type": "array", "maxItems": 500, "items": { "type": "string", "minLength": 1, "maxLength": 40 } },
+        "last": { "type": "array", "maxItems": 500, "items": { "type": "string", "minLength": 1, "maxLength": 40 } }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[\\w:.-]+$" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "description": { "type": "string", "maxLength": 2000 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[\\w:.-]+$"
+    },
+    "flag": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "condition": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": ["all", "any", "not", "age", "stat", "money", "trait", "flag", "chose", "counter", "person", "ailment", "job"]
+        }
+      },
+      "description": "Conditions gate when actions/events are available. 'job' matches current employment by id/title/field; with ever=true it matches any job the character has ever held."
+    },
+    "effect": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": ["stat", "money", "trait", "flag", "unflag", "counter", "collect", "loseitem", "die", "ailment", "cure", "rel", "relation", "person", "memory"]
+        }
+      },
+      "description": "World-law effects are restricted to the RNG-free/subject-free subset: stat, money, trait, flag, unflag, counter, collect, loseitem, die, cure."
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["weight", "result"],
+      "properties": {
+        "weight": { "type": "number", "minimum": 0, "maximum": 1000000 },
+        "weightModifiers": { "type": "array", "maxItems": 20 },
+        "effects": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/effect" } },
+        "result": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "goto": { "$ref": "#/$defs/id" }
+      }
+    },
+    "choice": {
+      "type": "object",
+      "required": ["id", "text"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "conditions": { "$ref": "#/$defs/condition" },
+        "outcomes": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/$defs/outcome" } },
+        "effects": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/effect" } },
+        "result": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "goto": { "$ref": "#/$defs/id" }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": ["id", "title", "description", "choices"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "category": { "type": "string", "maxLength": 64 },
+        "conditions": { "$ref": "#/$defs/condition" },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1000000 },
+        "weightModifiers": { "type": "array", "maxItems": 20 },
+        "once": { "type": "boolean" },
+        "cooldown": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "forced": { "type": "boolean" },
+        "repeatDecay": { "type": "number", "minimum": 0, "maximum": 1 },
+        "choices": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/$defs/choice" } },
+        "subject": { "type": "object" },
+        "ui": { "type": "object", "properties": { "x": { "type": "number" }, "y": { "type": "number" } } }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "category": { "type": "string", "maxLength": 64 },
+        "conditions": { "$ref": "#/$defs/condition" },
+        "cost": { "type": "number", "minimum": 0, "maximum": 1000000000 },
+        "allowDebt": { "type": "boolean" },
+        "usesPerYear": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "once": { "type": "boolean" },
+        "usesBudget": { "type": "boolean" },
+        "outcomes": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/$defs/outcome" } },
+        "effects": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/effect" } },
+        "result": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "goto": { "$ref": "#/$defs/id" },
+        "hint": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "job": {
+      "type": "object",
+      "required": ["id", "title", "salary"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "salary": { "type": "integer", "minimum": 0, "maximum": 1000000000 },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Career field the job belongs to, e.g. 'white_collar', 'service', 'labor', 'medical', 'public'. Used by {kind:'job', field:...} conditions."
+        },
+        "description": { "type": "string", "maxLength": 2000 },
+        "conditions": { "$ref": "#/$defs/condition" },
+        "hireWeight": { "type": "number", "minimum": 0, "maximum": 100 },
+        "hireModifiers": { "type": "array", "maxItems": 20 },
+        "hint": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "worldLaw": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "conditions": { "$ref": "#/$defs/condition" },
+        "minAge": { "type": "integer", "minimum": 0, "maximum": 130 },
+        "maxAge": { "type": "integer", "minimum": 0, "maximum": 130 },
+        "everyYears": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "chance": { "type": "number", "minimum": 0, "maximum": 100 },
+        "effects": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/effect" } },
+        "drift": { "type": "array", "maxItems": 20 },
+        "silent": { "type": "boolean" }
+      }
+    },
+    "shopItem": {
+      "type": "object",
+      "required": ["id", "name", "price"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "price": { "type": "number", "minimum": 0, "maximum": 1000000000 },
+        "conditions": { "$ref": "#/$defs/condition" },
+        "repeatable": { "type": "boolean" },
+        "usesPerYear": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "effects": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/effect" } },
+        "passiveEffects": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/effect" } },
+        "hint": { "type": "string", "maxLength": 200 }
+      }
+    }
+  }
+}

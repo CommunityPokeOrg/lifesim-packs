@@ -1,0 +1,207 @@
+{
+  "id": "white-collar-jobs",
+  "name": "White Collar Jobs",
+  "version": "1.0.0",
+  "description": "A corporate career track: mailroom to analyst to senior roles. Jobs here use the \"white_collar\" field, which crime and career packs gate on with {kind:\"job\", field:\"white_collar\"} conditions.",
+  "events": [
+    {
+      "id": "wcj.corporate_picnic",
+      "title": "Mandatory fun day",
+      "description": "The company picnic is 'voluntary' in the same way breathing is. Someone is already doing trust falls.",
+      "category": "work",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "weight": 8,
+      "cooldown": 3,
+      "choices": [
+        {
+          "id": "mingle",
+          "text": "Network aggressively",
+          "outcomes": [
+            {
+              "weight": 60,
+              "effects": [
+                { "kind": "stat", "stat": "happiness", "delta": 6 },
+                { "kind": "person", "role": "coworker", "rel": 20 }
+              ],
+              "result": "You exchanged business cards at a barbecue. Someone important knows your name now."
+            },
+            {
+              "weight": 40,
+              "effects": [{ "kind": "stat", "stat": "happiness", "delta": -3 }],
+              "result": "You spent an hour listening to Doug from Compliance talk about his boat."
+            }
+          ]
+        },
+        {
+          "id": "sneak_out",
+          "text": "Slip away early",
+          "effects": [
+            { "kind": "stat", "stat": "happiness", "delta": 2 }
+          ],
+          "result": "You left during the trust falls. Nobody noticed. Doug did, actually."
+        }
+      ]
+    },
+    {
+      "id": "wcj.open_plan_despair",
+      "title": "Open-plan office blues",
+      "description": "Your desk neighbor just discovered speakerphone. Your soul briefly leaves your body.",
+      "category": "work",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "job", "field": "white_collar" },
+          { "kind": "not", "condition": { "kind": "flag", "flag": "in_prison", "equals": true } }
+        ]
+      },
+      "weight": 6,
+      "cooldown": 4,
+      "choices": [
+        {
+          "id": "endure",
+          "text": "Put on headphones and endure",
+          "effects": [
+            { "kind": "stat", "stat": "happiness", "delta": -2 },
+            { "kind": "stat", "stat": "smarts", "delta": 1 }
+          ],
+          "result": "You finished the quarter's spreadsheets while fantasizing about a door that closes."
+        },
+        {
+          "id": "complain",
+          "text": "Take it to HR",
+          "outcomes": [
+            {
+              "weight": 50,
+              "effects": [
+                { "kind": "stat", "stat": "happiness", "delta": 3 },
+                { "kind": "person", "role": "coworker", "rel": -10 }
+              ],
+              "result": "HR moved your desk. Your neighbor now uses speakerphone *at* you from further away."
+            },
+            {
+              "weight": 50,
+              "effects": [{ "kind": "stat", "stat": "happiness", "delta": -4 }],
+              "result": "HR suggested 'a conversation about communication styles.' You bought earplugs."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "jobs": [
+    {
+      "id": "mailroom_clerk",
+      "title": "Mailroom Clerk",
+      "salary": 28000,
+      "field": "white_collar",
+      "description": "Bottom rung of the corporate ladder. You sort envelopes and overhear everything.",
+      "conditions": { "kind": "age", "min": 18 },
+      "hireWeight": 80,
+      "hint": "Age 18+"
+    },
+    {
+      "id": "accountant",
+      "title": "Accountant",
+      "salary": 60000,
+      "field": "white_collar",
+      "description": "Ledgers, audits, and a front-row seat to where the money goes.",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "age", "min": 22 },
+          {
+            "kind": "any",
+            "conditions": [
+              { "kind": "flag", "flag": "degree", "equals": true },
+              { "kind": "job", "id": "mailroom_clerk", "ever": true }
+            ]
+          }
+        ]
+      },
+      "hireWeight": 65,
+      "hireModifiers": [
+        {
+          "when": { "kind": "stat", "stat": "smarts", "op": "gte", "value": 65 },
+          "add": 15
+        }
+      ],
+      "hint": "Age 22+ with a degree, or promoted out of the mailroom"
+    },
+    {
+      "id": "financial_analyst",
+      "title": "Financial Analyst",
+      "salary": 72000,
+      "field": "white_collar",
+      "description": "Models, forecasts, and Bloomberg terminals. You see the trades before they settle.",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "age", "min": 21 },
+          {
+            "kind": "any",
+            "conditions": [
+              { "kind": "flag", "flag": "degree", "equals": true },
+              { "kind": "job", "id": "mailroom_clerk", "ever": true }
+            ]
+          }
+        ]
+      },
+      "hireWeight": 60,
+      "hireModifiers": [
+        {
+          "when": { "kind": "stat", "stat": "smarts", "op": "gte", "value": 70 },
+          "add": 20
+        },
+        {
+          "when": { "kind": "job", "id": "accountant", "ever": true },
+          "add": 15
+        }
+      ],
+      "hint": "Age 21+ with a degree or mailroom experience"
+    },
+    {
+      "id": "compliance_officer",
+      "title": "Compliance Officer",
+      "salary": 68000,
+      "field": "white_collar",
+      "description": "You are the person the fraud packs pretend to like.",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "age", "min": 24 },
+          { "kind": "flag", "flag": "degree", "equals": true }
+        ]
+      },
+      "hireWeight": 62,
+      "hint": "Age 24+ with a degree"
+    },
+    {
+      "id": "senior_analyst",
+      "title": "Senior Analyst",
+      "salary": 118000,
+      "field": "white_collar",
+      "description": "Corner-office adjacent. Your models now move money that other people only dream about.",
+      "conditions": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "age", "min": 27 },
+          { "kind": "job", "id": "financial_analyst", "ever": true }
+        ]
+      },
+      "hireWeight": 55,
+      "hireModifiers": [
+        {
+          "when": { "kind": "stat", "stat": "smarts", "op": "gte", "value": 75 },
+          "add": 15
+        }
+      ],
+      "hint": "Age 27+ and you must have worked as a Financial Analyst"
+    }
+  ]
+}
